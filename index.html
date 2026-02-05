@@ -18,6 +18,21 @@
       <textarea id="concept" placeholder="Example: sky crystals, floating islands, and lightning tools"></textarea>
 
       <div class="row">
+        <label for="modType">Mod type</label>
+        <select id="modType">
+          <option value="biome">Biome</option>
+          <option value="mob">Mob</option>
+          <option value="structure">Structure</option>
+          <option value="item" selected>Item</option>
+          <option value="block">Block</option>
+          <option value="dimension">Dimension</option>
+          <option value="magic">Magic</option>
+          <option value="tech">Tech</option>
+          <option value="adventure">Adventure</option>
+        </select>
+      </div>
+
+      <div class="row">
         <label for="modid">Mod ID</label>
         <input id="modid" type="text" placeholder="auto-generated if left empty" />
       </div>

@@ -4,6 +4,7 @@ ModMint is a standalone web app where users type a simple idea and get a generat
 
 ## Features
 - Takes plain-language mod concepts.
+- Lets users select a mod type (biome, mob, structure, item, block, etc.).
 - Auto-detects keywords and turns them into starter items/blocks.
 - Generates a complete mod scaffold (`fabric.mod.json`, Java classes, gradle files, README).
 - Downloads everything as one zip with one click.

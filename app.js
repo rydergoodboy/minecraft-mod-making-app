@@ -1,5 +1,6 @@
 const conceptEl = document.getElementById('concept');
 const modIdEl = document.getElementById('modid');
+const modTypeEl = document.getElementById('modType');
 const generateBtn = document.getElementById('generate');
 const statusEl = document.getElementById('status');
 const previewCard = document.getElementById('preview-card');
@@ -22,7 +23,7 @@ function parseKeywords(text) {
   return [...new Set(text.toLowerCase().match(/[a-z]{4,}/g) || [])].slice(0, 5);
 }
 
-function buildModSpec(input, explicitModId) {
+function buildModSpec(input, explicitModId, modType) {
   const keywords = parseKeywords(input);
   const modid = safeId(explicitModId || keywords.slice(0, 2).join('_') || input || 'generated_mod');
   const packagePath = `com/modmint/${modid}`;
@@ -43,13 +44,14 @@ function buildModSpec(input, explicitModId) {
 
   return {
     input,
+    modType,
     modid,
     packagePath,
     mainClass,
     keywords,
     items,
     blocks,
-    description: `A generated mod inspired by: ${input}`,
+    description: `A generated ${modType} mod inspired by: ${input}`,
   };
 }
 
@@ -188,6 +190,7 @@ ${spec.keywords.map((k) => `- ${k}`).join('\n') || '- none'}
 function renderPreview(spec) {
   const tokens = spec.keywords.map((k) => `<span class="token">${k}</span>`).join('');
   previewEl.innerHTML = `
+    <p><strong>Mod type:</strong> ${spec.modType}</p>
     <p><strong>Mod ID:</strong> ${spec.modid}</p>
     <p><strong>Main class:</strong> ${spec.mainClass}</p>
     <p><strong>Package:</strong> ${spec.packagePath.replace(/\//g, '.')}</p>
@@ -203,7 +206,7 @@ generateBtn.addEventListener('click', async () => {
     return;
   }
 
-  const spec = buildModSpec(concept, modIdEl.value.trim());
+  const spec = buildModSpec(concept, modIdEl.value.trim(), modTypeEl.value);
   const files = generateFiles(spec);
 
   lastBundle = { spec, files };
