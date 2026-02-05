@@ -60,61 +60,29 @@ function javaString(str) {
 }
 
 function generateFiles(spec) {
-  const gradleProps = `org.gradle.jvmargs=-Xmx1G\norg.gradle.parallel=true\n`;
-
-  const modJson = {
-    schemaVersion: 1,
-    id: spec.modid,
-    version: '1.0.0',
-    name: title(spec.modid.replace(/_/g, ' ')),
-    description: spec.description,
-    authors: ['ModMint'],
-    contact: { sources: 'https://example.com/modmint' },
-    license: 'MIT',
-    environment: '*',
-    entrypoints: {
-      main: [`${spec.packagePath.replace(/\//g, '.')}.${spec.mainClass}`],
-    },
-    depends: {
-      fabricloader: '>=0.15.0',
-      minecraft: '1.20.x',
-      java: '>=17',
-      fabric: '*',
-    },
-  };
-
-  const itemRegistrations = spec.items
-    .map(
-      (item) =>
-        `    public static final Item ${item.id.toUpperCase()} = registerItem("${item.id}");`
-    )
-    .join('\n');
+  const gradleProps = `org.gradle.jvmargs=-Xmx2G\norg.gradle.parallel=true\n`;
 
   const itemInitLog = spec.items.map((item) => item.id).join(', ') || 'no items';
-
-  const blockRegistrations = spec.blocks
-    .map(
-      (block) =>
-        `    public static final Block ${block.id.toUpperCase()} = registerBlock("${block.id}");`
-    )
-    .join('\n');
 
   const blockInitLog = spec.blocks.map((block) => block.id).join(', ') || 'no blocks';
 
   const mainJava = `package ${spec.packagePath.replace(/\//g, '.')};
 
-import net.fabricmc.api.ModInitializer;
+import com.mojang.logging.LogUtils;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class ${spec.mainClass} implements ModInitializer {
+@Mod(${spec.mainClass}.MOD_ID)
+public class ${spec.mainClass} {
     public static final String MOD_ID = "${spec.modid}";
-    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+    public static final Logger LOGGER = LogUtils.getLogger();
 
-    @Override
-    public void onInitialize() {
-        ModItems.initialize();
-        ModBlocks.initialize();
+    public ${spec.mainClass}() {
+        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+        ModItems.register(modEventBus);
+        ModBlocks.register(modEventBus);
         LOGGER.info("${javaString(spec.description)}");
     }
 }
@@ -122,19 +90,26 @@ public class ${spec.mainClass} implements ModInitializer {
 
   const itemsJava = `package ${spec.packagePath.replace(/\//g, '.')};
 
-import net.minecraft.item.Item;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
+import net.minecraft.world.item.Item;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 
 public class ModItems {
-${itemRegistrations || '    // Add generated items here.'}
+    public static final DeferredRegister<Item> ITEMS =
+            DeferredRegister.create(ForgeRegistries.ITEMS, ${spec.mainClass}.MOD_ID);
 
-    private static Item registerItem(String id) {
-        return Registry.register(Registries.ITEM, Identifier.of(${spec.mainClass}.MOD_ID, id), new Item(new Item.Settings()));
-    }
+${spec.items
+  .map(
+    (item) =>
+      `    public static final RegistryObject<Item> ${item.id.toUpperCase()} = ITEMS.register("${item.id}",
+            () -> new Item(new Item.Properties()));`
+  )
+  .join('\n') || '    // Add generated items here.'}
 
-    public static void initialize() {
+    public static void register(IEventBus eventBus) {
+        ITEMS.register(eventBus);
         ${spec.mainClass}.LOGGER.info("Registering generated items: ${itemInitLog}");
     }
 }
@@ -142,22 +117,28 @@ ${itemRegistrations || '    // Add generated items here.'}
 
   const blocksJava = `package ${spec.packagePath.replace(/\//g, '.')};
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.MapColor;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.MapColor;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 
 public class ModBlocks {
-${blockRegistrations || '    // Add generated blocks here.'}
+    public static final DeferredRegister<Block> BLOCKS =
+            DeferredRegister.create(ForgeRegistries.BLOCKS, ${spec.mainClass}.MOD_ID);
 
-    private static Block registerBlock(String id) {
-        return Registry.register(Registries.BLOCK, Identifier.of(${spec.mainClass}.MOD_ID, id),
-                new Block(AbstractBlock.Settings.create().mapColor(MapColor.STONE_GRAY).strength(2.0f)));
-    }
+${spec.blocks
+  .map(
+    (block) =>
+      `    public static final RegistryObject<Block> ${block.id.toUpperCase()} = BLOCKS.register("${block.id}",
+            () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.STONE).strength(2.0f)));`
+  )
+  .join('\n') || '    // Add generated blocks here.'}
 
-    public static void initialize() {
+    public static void register(IEventBus eventBus) {
+        BLOCKS.register(eventBus);
         ${spec.mainClass}.LOGGER.info("Registering generated blocks: ${blockInitLog}");
     }
 }
@@ -176,10 +157,110 @@ ${spec.keywords.map((k) => `- ${k}`).join('\n') || '- none'}
 3. Run \`./gradlew runClient\`
 `;
 
+  const modDisplayName = title(spec.modid.replace(/_/g, ' '));
+  const packageName = spec.packagePath.replace(/\//g, '.');
+
+  const settingsGradle = `pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { url = 'https://maven.minecraftforge.net' }
+        mavenCentral()
+    }
+}
+
+rootProject.name = "${spec.modid}"
+`;
+
+  const buildGradle = `plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'maven-publish'
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+}
+
+group = '${packageName}'
+version = '1.0.0'
+
+base {
+    archivesName = '${spec.modid}'
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+minecraft {
+    mappings channel: 'official', version: '1.20.1'
+
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.console.level', 'debug'
+            mods {
+                "${spec.modid}" {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        client {}
+        server {}
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.20.1-47.2.0'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+`;
+
+  const modsToml = `modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+
+[[mods]]
+modId="${spec.modid}"
+version="\${file.jarVersion}"
+displayName="${modDisplayName}"
+authors="ModMint"
+description='''
+${spec.description}
+'''
+
+[[dependencies.${spec.modid}]]
+modId="forge"
+mandatory=true
+versionRange="[47,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.${spec.modid}]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.20.1,1.21)"
+ordering="NONE"
+side="BOTH"
+`;
+
+  const packMcmeta = `{
+  "pack": {
+    "description": "${javaString(spec.description)}",
+    "pack_format": 15
+  }
+}
+`;
+
   return {
-    'settings.gradle': `rootProject.name = "${spec.modid}"\n`,
+    'settings.gradle': settingsGradle,
+    'build.gradle': buildGradle,
     'gradle.properties': gradleProps,
-    'src/main/resources/fabric.mod.json': `${JSON.stringify(modJson, null, 2)}\n`,
+    'src/main/resources/META-INF/mods.toml': modsToml,
+    'src/main/resources/pack.mcmeta': packMcmeta,
     [`src/main/java/${spec.packagePath}/${spec.mainClass}.java`]: mainJava,
     [`src/main/java/${spec.packagePath}/ModItems.java`]: itemsJava,
     [`src/main/java/${spec.packagePath}/ModBlocks.java`]: blocksJava,
@@ -226,6 +307,6 @@ downloadBtn.addEventListener('click', async () => {
   Object.entries(lastBundle.files).forEach(([path, contents]) => root.file(path, contents));
 
   const blob = await zip.generateAsync({ type: 'blob' });
-  saveAs(blob, `${lastBundle.spec.modid}-mod-app.zip`);
+  saveAs(blob, `${lastBundle.spec.modid}-forge-1.20.1-mod-app.zip`);
   statusEl.textContent = 'Downloaded! Open the zip to start building your generated mod.';
 });
