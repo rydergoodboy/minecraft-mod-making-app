@@ -1,0 +1,92 @@
+:root {
+  color-scheme: dark;
+  --bg: #0d1117;
+  --card: #161b22;
+  --border: #30363d;
+  --text: #e6edf3;
+  --accent: #2ea043;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #13203a 0%, var(--bg) 35%);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.app-shell {
+  width: min(920px, 92vw);
+  margin: 2rem auto;
+  display: grid;
+  gap: 1rem;
+}
+
+header h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3rem);
+}
+
+.card {
+  background: color-mix(in oklab, var(--card), transparent 8%);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+textarea,
+input {
+  width: 100%;
+  margin-top: .45rem;
+  margin-bottom: .8rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #0f141b;
+  color: var(--text);
+  padding: .8rem;
+}
+
+textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+button {
+  border: 0;
+  border-radius: 9px;
+  padding: .7rem 1rem;
+  font-weight: 700;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(1.1);
+}
+
+#status {
+  margin: .7rem 0 0;
+  color: #8b949e;
+}
+
+.token {
+  display: inline-block;
+  margin: .3rem .3rem 0 0;
+  padding: .3rem .5rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #0f141b;
+}
+
+pre {
+  white-space: pre-wrap;
+  background: #0f141b;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: .75rem;
+}

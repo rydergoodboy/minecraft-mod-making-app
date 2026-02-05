@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ModMint - Minecraft Mod Maker</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header>
+      <h1>ModMint</h1>
+      <p>Describe your idea in simple words and generate a full Minecraft Fabric mod starter app.</p>
+    </header>
+
+    <section class="card">
+      <label for="concept">Your mod idea</label>
+      <textarea id="concept" placeholder="Example: sky crystals, floating islands, and lightning tools"></textarea>
+
+      <div class="row">
+        <label for="modid">Mod ID</label>
+        <input id="modid" type="text" placeholder="auto-generated if left empty" />
+      </div>
+
+      <button id="generate">Generate Mod App</button>
+      <p id="status" aria-live="polite"></p>
+    </section>
+
+    <section class="card" id="preview-card" hidden>
+      <h2>Generated plan</h2>
+      <div id="preview"></div>
+      <button id="download">Download Mod App (.zip)</button>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
